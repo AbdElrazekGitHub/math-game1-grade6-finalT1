@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>تحدي الرياضيات - الصف السادس</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <style>
+        :root {
+            --primary-color: #2c3e50;
+            --secondary-color: #3498db;
+            --success-color: #27ae60;
+            --error-color: #e74c3c;
+            --accent-color: #f1c40f;
+        }
+
+        body {
+            font-family: 'Cairo', sans-serif;
+            background: linear-gradient(135deg, #e0eafc 0%, #cfdef3 100%);
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            color: var(--primary-color);
+        }
+
+        .game-container {
+            background: white;
+            padding: 2.5rem;
+            border-radius: 20px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.15);
+            width: 90%;
+            max-width: 700px;
+            text-align: center;
+        }
+
+        h1 { color: var(--secondary-color); font-weight: 700; margin-bottom: 1.5rem; }
+
+        .question-text {
+            font-size: 1.3rem;
+            margin-bottom: 2rem;
+            line-height: 1.8;
+            font-weight: 700;
+            min-height: 60px;
+        }
+
+        .options-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.2rem;
+        }
+
+        button.opt-btn {
+            padding: 15px;
+            font-family: 'Cairo', sans-serif;
+            font-size: 1.1rem;
+            font-weight: 600;
+            border: 2px solid #ddd;
+            background: #fdfdfd;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        button.opt-btn:hover {
+            border-color: var(--secondary-color);
+            background: #f0f7ff;
+            transform: translateY(-3px);
+        }
+
+        .progress-bar {
+            height: 12px;
+            background: #eee;
+            border-radius: 6px;
+            margin-bottom: 2rem;
+            overflow: hidden;
+        }
+
+        .progress-inner {
+            height: 100%;
+            background: linear-gradient(90deg, var(--secondary-color), var(--success-color));
+            width: 0%;
+            transition: width 0.4s ease;
+        }
+
+        #certificate {
+            display: none;
+            border: 15px double var(--accent-color);
+            padding: 40px;
+            background: #fff;
+            margin-top: 20px;
+            background-image: radial-gradient(circle, #fffaf0 20%, transparent 20%);
+            background-size: 10px 10px;
+        }
+
+        .cert-header { font-size: 28px; color: #b8860b; font-weight: 700; margin-bottom: 10px; }
+        .cert-name { font-size: 34px; margin: 20px 0; color: #222; border-bottom: 3px solid var(--accent-color); display: inline-block; padding: 0 40px; font-weight: 700; }
+        .signature { margin-top: 40px; text-align: left; font-size: 1.1rem; line-height: 1.5; }
+
+        .hidden { display: none; }
+        
+        input#student-name {
+            font-family: 'Cairo', sans-serif;
+            padding: 12px;
+            width: 80%;
+            font-size: 1rem;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="game-container">
+        <div id="start-screen">
+            <h1>مراجعة ليلة الامتحان الذكية 🎓</h1>
+            <p style="font-size: 1.2rem; margin-bottom: 20px;">بإشراف الأستاذ عبدالرازق فتحي</p>
+            <input type="text" id="student-name" placeholder="اكتب اسمك الثلاثي هنا لشهادة التفوق">
+            <br>
+            <button class="opt-btn" onclick="startGame()" style="background: var(--secondary-color); color: white; padding: 15px 50px;">ابدأ التحدي</button>
+        </div>
+
+        <div id="quiz-screen" class="hidden">
+            <div class="progress-bar"><div class="progress-inner" id="progress"></div></div>
+            <div class="question-box">
+                <p id="q-text" class="question-text"></p>
+                <div id="options" class="options-grid"></div>
+            </div>
+        </div>
+
+        <div id="result-screen" class="hidden">
+            <h2 id="result-title"></h2>
+            <p id="final-score" style="font-size: 1.6rem; font-weight: 700;"></p>
+            
+            <div id="certificate">
+                <div class="cert-header">📜 شهادة تقدير واعتزاز 📜</div>
+                <p style="font-size: 1.3rem;">يتقدم الأستاذ/ <b>عبدالرازق فتحي</b></p>
+                <p>بكل فخر واعتزاز بتهنئة الطالب/ة:</p>
+                <div class="cert-name" id="cert-student-name"></div>
+                <p style="font-size: 1.2rem;">لتميزه في مادة الرياضيات وحصوله على درجة مشرفة في الاختبار التفاعلي.</p>
+                <div class="signature">
+                    <b>توقيع معلم المادة:</b><br>
+                    أ/ عبدالرازق فتحي <br>
+                    2026 م
+                </div>
+            </div>
+            
+            <button class="opt-btn" onclick="location.reload()" style="margin-top: 25px;">إعادة الاختبار 🔄</button>
+        </div>
+    </div>
+
+    <script>
+        // 25 سؤالاً مستخرجاً من الملف مع إزالة جميع المراجع
+        const questions = [
+            { q: "ما هو (G.C.F) للعددين 8 و 4؟", options: ["1", "2", "4", "8"], correct: "4" },
+            { q: "أي من الأعداد التالية يعتبر عدداً أولياً؟", options: ["12", "19", "25", "35"], correct: "19" },
+            { q: "ما هو العدد الذي جميع عوامله الأولية هي: 3, 5, 2؟", options: ["15", "20", "30", "45"], correct: "30" },
+            { q: "العدد الصحيح السابق مباشرة للعدد -9 هو:", options: ["-8", "-10", "8", "10"], correct: "-10" },
+            { q: "ما هو أكبر عدد صحيح سالب؟", options: ["0", "-1", "-100", "لا يوجد"], correct: "-1" },
+            { q: "المعكوس الجمعي للعدد -7 هو:", options: ["0", "1", "7", "-7"], correct: "7" },
+            { q: "في الصورة الأسية 2^3، الأساس هو:", options: ["2", "3", "8", "6"], correct: "2" },
+            { q: "المعامل في المقدار الجبري 4k + 6 هو:", options: ["k", "6", "10", "4"], correct: "4" },
+            { q: "الثابت في المقدار الجبري 3F + 2m + 4 هو:", options: ["3", "2", "4", "F"], correct: "4" },
+            { q: "البيانات التالية وصفية ما عدا:", options: ["الديانة", "الجنسية", "العمر", "فصيلة الدم"], correct: "العمر" },
+            { q: "المنوال لمجموعة القيم 5, 6, 4, 5, 4, 5, 7 هو:", options: ["4", "5", "6", "7"], correct: "5" },
+            { q: "الوسط الحسابي لمجموعة البيانات 3, 4, 6, 7 هو:", options: ["4", "5", "6", "20"], correct: "5" },
+            { q: "إذا كانت أكبر قيمة 30 وأقل قيمة 5، فإن المدى يساوي:", options: ["35", "25", "150", "6"], correct: "25" },
+            { q: "عدد حدود المقدار الجبري 2x + 4y + 6 هو:", options: ["1", "2", "3", "6"], correct: "3" },
+            { q: "المتغير التابع في المعادلة y = 2x هو:", options: ["x", "y", "2", "لا يوجد"], correct: "y" },
+            { q: "أي مما يلي يمثل عدداً صحيحاً؟", options: ["4.5", "-3", "1/2", "0.2"], correct: "-3" },
+            { q: "ناتج العملية 6^2 يساوي:", options: ["12", "36", "8", "24"], correct: "36" },
+            { q: "الوسط الحسابي للعددين 3/4 و 1/4 هو:", options: ["1/2", "1", "1/4", "3/4"], correct: "1/2" },
+            { q: "الحدود الجبرية المتشابهة في المقدار 4x + 6 + 2x هي:", options: ["4x, 6", "4x, 2x", "6, 2x", "لا يوجد"], correct: "4x, 2x" },
+            { q: "قيمة x في المعادلة |x| = 3 هي:", options: ["3 فقط", "-3 فقط", "3 أو -3", "0"], correct: "3 أو -3" },
+            { q: "التمثيل البياني الذي يعرض بيانات في صورة فترات هو:", options: ["الأعمدة", "المخطط الصندوقي", "المدرج التكراري", "الصور"], correct: "المدرج التكراري" },
+            { q: "إذا كانت x + 5 = 12 فإن x تساوي:", options: ["5", "7", "17", "12"], correct: "7" },
+            { q: "العدد الصحيح الذي يمثل خسارة 20 جنيهاً هو:", options: ["20", "0", "-20", "40"], correct: "-20" },
+            { q: "المتغير الذي لا تعتمد قيمته على أي متغير آخر يسمى متغيراً:", options: ["تابعاً", "مستقلاً", "وصفياً", "كمياً"], correct: "مستقلاً" },
+            { q: "ناتج 5^2 - 3 * 4 + 2 يساوي:", options: ["15", "90", "15", "15"], correct: "15" }
+        ];
+
+        let currentQ = 0;
+        let score = 0;
+
+        function startGame() {
+            const name = document.getElementById('student-name').value;
+            if(name.length < 3) {
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'عذراً!',
+                    text: 'يرجى إدخال اسمك الحقيقي لتتمكن من استلام الشهادة',
+                    confirmButtonText: 'حسناً',
+                    confirmButtonColor: '#3498db'
+                });
+                return;
+            }
+            document.getElementById('start-screen').classList.add('hidden');
+            document.getElementById('quiz-screen').classList.remove('hidden');
+            showQuestion();
+        }
+
+        function showQuestion() {
+            const q = questions[currentQ];
+            document.getElementById('q-text').innerText = `${currentQ + 1}. ${q.q}`;
+            const optionsDiv = document.getElementById('options');
+            optionsDiv.innerHTML = '';
+            
+            q.options.forEach(opt => {
+                const btn = document.createElement('button');
+                btn.className = 'opt-btn';
+                btn.innerText = opt;
+                btn.onclick = () => checkAnswer(opt);
+                optionsDiv.appendChild(btn);
+            });
+
+            document.getElementById('progress').style.width = ((currentQ) / questions.length) * 100 + "%";
+        }
+
+        function checkAnswer(selected) {
+            const correct = questions[currentQ].correct;
+
+            if(selected === correct) {
+                score++;
+                Swal.fire({
+                    icon: 'success',
+                    title: 'إجابة صحيحة',
+                    showConfirmButton: false,
+                    timer: 800,
+                    toast: true,
+                    position: 'top-end'
+                });
+            } else {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'إجابة خاطئة',
+                    text: `الإجابة الصحيحة هي: ${correct}`,
+                    confirmButtonText: 'متابعة',
+                    confirmButtonColor: '#e74c3c'
+                });
+            }
+
+            currentQ++;
+            if(currentQ < questions.length) {
+                showQuestion();
+            } else {
+                showResults();
+            }
+        }
+
+        function showResults() {
+            document.getElementById('quiz-screen').classList.add('hidden');
+            document.getElementById('result-screen').classList.remove('hidden');
+            
+            const percent = Math.round((score / questions.length) * 100);
+            const name = document.getElementById('student-name').value;
+            
+            document.getElementById('final-score').innerText = `حصلت على ${percent}% (${score} من ${questions.length})`;
+
+            if(percent >= 80) {
+                document.getElementById('result-title').innerText = "مبروك! أنت بطل الرياضيات 🏆";
+                document.getElementById('certificate').style.display = 'block';
+                document.getElementById('cert-student-name').innerText = name;
+                
+                Swal.fire({
+                    title: 'تهانينا!',
+                    text: `رائع يا ${name}! لقد حصلت على الشهادة بنجاح.`,
+                    icon: 'success',
+                    confirmButtonText: 'عرض الشهادة'
+                });
+            } else {
+                document.getElementById('result-title').innerText = "حاول مرة أخرى لتحصل على الشهادة 📚";
+                Swal.fire({
+                    title: 'أداء جيد',
+                    text: 'تحتاج للحصول على 80% أو أكثر لتستحق شهادة الأستاذ عبدالرازق.',
+                    icon: 'info',
+                    confirmButtonText: 'حسناً'
+                });
+            }
+        }
+    </script>
+</body>
+</html>
